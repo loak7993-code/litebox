@@ -124,14 +124,15 @@ fn make_service(cfg: &litebox_core::Config) -> Arc<Mutex<VmService>> {
     Arc::new(Mutex::new(svc))
 }
 
-fn cmd_serve(cfg: &litebox_core::Config, flags: &[String], _rest: &[String]) -> i32 {
-    let addr = flags
-        .iter()
-        .position(|f| f == "--addr")
-        .and_then(|i| flags.get(i + 1))
-        .map(|s| s.to_string())
-        .or_else(|| cfg.http_addr.clone())
-        .unwrap_or_else(|| "127.0.0.1:7830".to_string());
+fn cmd_serve(cfg: &litebox_core::Config, flags: &[String], rest: &[String]) -> i32 {
+    // --addr's value lands in `rest` (it doesn't start with --)
+    let addr = if flags.iter().any(|f| f == "--addr") {
+        rest.first().cloned()
+    } else {
+        None
+    }
+    .or_else(|| cfg.http_addr.clone())
+    .unwrap_or_else(|| "127.0.0.1:7830".to_string());
     let service = make_service(cfg);
     match HttpServer::serve(&addr, service.clone()) {
         Ok(()) => {

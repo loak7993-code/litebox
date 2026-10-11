@@ -5,6 +5,12 @@ runs real Android APKs headless so AI agents can install, launch, drive, pause,
 inspect, and replay them. One binary, three control surfaces: CLI, JSON-RPC
 over HTTP, and MCP.
 
+**Source:** https://github.com/loak7993-code/litebox
+
+**Live instance** (this repo's author runs one): `http://74.208.177.37:7830` —
+every route requires `Authorization: Bearer <token>`; the author's token is in
+`~/.litebox/token` on the host. Prefer a tunnel for TLS in production.
+
 LiteBox is not a full-system emulator. It does not boot an Android system
 image, and it does not run native `.so` libraries or graphics-heavy UI. It runs
 the DEX bytecode of real APKs against an emulated framework subset, which is
@@ -143,6 +149,16 @@ curl -s localhost:7830/rpc -d '{"jsonrpc":"2.0","id":3,"method":"adb.screencap",
 | `pause_on` (config file) | `exception` / `exception_and_unsupported` | `exception` |
 | `heap_budget_bytes` | GC trigger threshold | 256 MiB |
 | `surface_width/height` | Framebuffer size | 720x1280 |
+
+## Auth (for public exposure)
+
+Set `LITEBOX_TOKEN` before `serve` and every route (RPC, MCP, WebSocket
+events) requires `Authorization: Bearer <token>` or `X-Litebox-Token` —
+verified from the public internet: 401 without, 200 with. Unset = open, for
+local use. The flag also supports `--addr 0.0.0.0:7830` for public binds.
+Plaintext HTTP caveat: run behind a tunnel (cloudflared) for TLS — account-less
+quick tunnels returned edge-404s from this host's IP range during testing, so
+a named tunnel on your own Cloudflare account is the TLS path.
 
 ## Operations & RAM profile
 

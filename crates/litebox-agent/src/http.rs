@@ -36,6 +36,18 @@ impl HttpServer {
     }
 }
 
+/// When LITEBOX_TOKEN is set, require it via `Authorization: Bearer <t>` or
+/// `X-Litebox-Token: <t>` on every request. Unset = open (local use).
+fn authorized(req: &Request) -> bool {
+    let Ok(expected) = std::env::var("LITEBOX_TOKEN") else { return true };
+    if expected.is_empty() {
+        return true;
+    }
+    let bearer = format!("Bearer {expected}");
+    req.header("authorization").as_deref() == Some(bearer.as_str())
+        || req.header("x-litebox-token").as_deref() == Some(expected.as_str())
+}
+
 fn handle_conn(mut stream: TcpStream, service: Arc<Mutex<VmService>>) -> std::io::Result<()> {
     stream.set_read_timeout(Some(std::time::Duration::from_secs(300)))?;
     loop {
@@ -44,6 +56,23 @@ fn handle_conn(mut stream: TcpStream, service: Arc<Mutex<VmService>>) -> std::io
             Ok(None) => return Ok(()),
             Err(_) => return Ok(()),
         };
+        // auth gate: when LITEBOX_TOKEN is set, every route requires it
+        if !authorized(&req) {
+            let body = Json::obj(vec![
+                ("error", Json::str("unauthorized")),
+                ("hint", Json::str("send header: Authorization: Bearer <LITEBOX_TOKEN>")),
+            ])
+            .to_string();
+            stream.write_all(
+                format!(
+                    "HTTP/1.1 401 Unauthorized\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                    body.len(),
+                    body
+                )
+                .as_bytes(),
+            )?;
+            return Ok(());
+        }
         // WebSocket upgrade
         if req.path == "/events" && req.is_ws_upgrade() {
             let key = req.header("sec-websocket-key").unwrap_or_default();
