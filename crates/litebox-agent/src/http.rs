@@ -321,6 +321,7 @@ pub const MCP_TOOL_LIST: &[(&str, &str, &str)] = &[
     ("state.tasks", "List VM tasks/threads", ""),
     ("state.frames", "Stack frames of a task", "{task?: number}"),
     ("state.heap", "Heap statistics", ""),
+    ("state.objects", "List live object refs by class", "{class?: string, limit?: number}"),
     ("state.object", "Inspect an object by ref", "{ref: number}"),
     ("state.statics", "Static fields of a class", "{class: string}"),
     ("object.write", "Patch an object field", "{ref: number, field: string, value: any}"),

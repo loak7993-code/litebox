@@ -175,6 +175,7 @@ impl VmService {
             "state.tasks" => self.state_tasks(),
             "state.frames" => self.state_frames(params),
             "state.heap" => self.state_heap(),
+            "state.objects" => self.state_objects(params),
             "state.object" => self.state_object(params),
             "state.statics" => self.state_statics(params),
             "object.write" => self.object_write(params),
@@ -553,6 +554,46 @@ impl VmService {
             ("budget_bytes", litebox_json::Json::num(m.heap_budget as f64)),
             ("by_type", litebox_json::Json::Arr(breakdown)),
         ]))
+    }
+
+    /// List live object refs, optionally filtered by class substring.
+    fn state_objects(&mut self, params: &litebox_json::Json) -> Res {
+        let class_filter = params.str_field("class").unwrap_or("").to_string();
+        let limit = param_u64(params, "limit").unwrap_or(50).min(500) as usize;
+        let mut out = Vec::new();
+        for (idx, obj) in self.machine.heap.iter_slots() {
+            let type_name = match obj {
+                litebox_dalvik::ObjectData::Instance { class, .. } => {
+                    self.machine.registry.class_name(*class).to_string()
+                }
+                litebox_dalvik::ObjectData::Str(_) => "java/lang/String".to_string(),
+                litebox_dalvik::ObjectData::Array { .. } => "array".to_string(),
+                litebox_dalvik::ObjectData::Class(_) => "java/lang/Class".to_string(),
+            };
+            if !class_filter.is_empty() && !type_name.contains(&class_filter) {
+                continue;
+            }
+            let preview = match obj {
+                litebox_dalvik::ObjectData::Str(s) => Some(s.to_string()),
+                litebox_dalvik::ObjectData::Instance { .. } => self
+                    .machine
+                    .get_instance_field(litebox_dalvik::ObjRef { idx, gen: 0 }, "text")
+                    .and_then(|v| self.machine.str_value(v)),
+                _ => None,
+            };
+            out.push(litebox_json::Json::obj(vec![
+                ("ref", litebox_json::Json::num(idx as f64)),
+                ("type", litebox_json::Json::str(type_name)),
+                (
+                    "text",
+                    preview.map(litebox_json::Json::Str).unwrap_or(litebox_json::Json::Null),
+                ),
+            ]));
+            if out.len() >= limit {
+                break;
+            }
+        }
+        Ok(litebox_json::Json::Arr(out))
     }
 
     fn state_object(&mut self, params: &litebox_json::Json) -> Res {
