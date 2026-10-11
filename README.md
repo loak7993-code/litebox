@@ -160,6 +160,22 @@ scripts/android-stop.sh    # stop entirely: container RAM goes to ~0
 Measured on this machine: Android 15 container ~1.0 GB steady-state (capped
 1.5 GB), LiteBox server ~4 MB, binary 1.53 MB static.
 
+## Vanilla profile
+
+The android15 container runs **pure AOSP — zero Google/GMS packages** (verified
+`pm list packages | grep -ci google` = 0) stripped to the basic set:
+
+**Kept:** Launcher, SystemUI, Settings, Calendar, Camera, Clock, Contacts,
+Files (DocumentsUI), Gallery, Music, WebView (library), plus your installed
+apps. **Disabled:** telephony stack (no radio), NFC/SE/UWB, printing, ads
+SDKs (AdServices, OnDevicePersonalization, FederatedCompute), HealthConnect,
+daydreams, wallpapers pickers, musicfx, searchbox, MTP, CTS shims, Chromium
+shell, Bluetooth, IME.
+
+Apply / re-apply after any container recreate with `scripts/android-strip.sh`
+(idempotent). Revert anything with
+`adb shell pm enable --user 0 <package>`.
+
 ## Architecture
 
 ```
