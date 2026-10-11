@@ -103,6 +103,36 @@ examples/smoke/build.sh     # javac -> d8 -> aapt2 -> apksigner
 Without an SDK, the test suite skips the toolchain-built fixture and the dex
 parser cross-checks against any `.dex`/`.apk` you point it at.
 
+## Driving real Android (adb passthrough)
+
+The same control plane also drives real Android devices — the bundled
+`android15` redroid container, hardware phones, the official emulator —
+through adb tools that exec the SDK's adb binary directly (no shell
+interpolation, hard timeouts, structured JSON results):
+
+| Tool | Purpose |
+|---|---|
+| `adb.devices` / `adb.connect` | enumerate / attach devices |
+| `adb.shell` | run any shell command (`getprop`, `dumpsys`, ...) |
+| `adb.install` / `adb.uninstall` / `adb.packages` | package management |
+| `adb.am_start` | launch an activity |
+| `adb.input` | tap / swipe / text / keyevent |
+| `adb.ui` | parsed UI hierarchy (nodes with text, class, bounds, clickable) |
+| `adb.screencap` | PNG screenshot (file or base64) |
+| `adb.logcat` | logcat dump with filter |
+
+`LITEBOX_ADB` overrides the adb path (default: the host SDK at
+`/opt/android-sdk/platform-tools/adb`, then PATH).
+
+An agent session over one surface, both layers — inspect the hierarchy, type
+into a real app, tap its buttons, capture the result:
+
+```sh
+curl -s localhost:7830/rpc -d '{"jsonrpc":"2.0","id":1,"method":"adb.ui","params":{}}'
+curl -s localhost:7830/rpc -d '{"jsonrpc":"2.0","id":2,"method":"adb.input","params":{"kind":"tap","args":[360,652]}}'
+curl -s localhost:7830/rpc -d '{"jsonrpc":"2.0","id":3,"method":"adb.screencap","params":{"out":"/tmp/after.png"}}'
+```
+
 ## Configuration
 
 | Env / flag | Purpose | Default |

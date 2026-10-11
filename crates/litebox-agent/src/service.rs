@@ -187,6 +187,17 @@ impl VmService {
             "snapshot.save" => self.snapshot_save(params),
             "snapshot.load" => self.snapshot_load(params),
             "api.coverage" => self.api_coverage(),
+            "adb.devices" => self.adb_devices(),
+            "adb.connect" => self.adb_connect(params),
+            "adb.shell" => self.adb_shell(params),
+            "adb.install" => self.adb_install(params),
+            "adb.uninstall" => self.adb_uninstall(params),
+            "adb.am_start" => self.adb_am_start(params),
+            "adb.input" => self.adb_input(params),
+            "adb.screencap" => self.adb_screencap(params),
+            "adb.logcat" => self.adb_logcat(params),
+            "adb.packages" => self.adb_packages(params),
+            "adb.ui" => self.adb_ui(params),
             _ => Err(RpcError::new(-32601, format!("unknown method: {method}"))),
         }
     }
@@ -810,6 +821,111 @@ impl VmService {
             ("loaded", litebox_json::Json::Bool(true)),
             ("bytes", litebox_json::Json::num(blob.len() as f64)),
         ]))
+    }
+
+    fn adb(&self) -> Result<PathBuf, RpcError> {
+        crate::adb::find_adb().map_err(|e| RpcError::internal(e.0))
+    }
+
+    fn adb_devices(&mut self) -> Res {
+        let adb = self.adb()?;
+        crate::adb::devices(&adb).map_err(|e| RpcError::internal(e.0))
+    }
+
+    fn adb_connect(&mut self, params: &litebox_json::Json) -> Res {
+        let adb = self.adb()?;
+        let host = params.str_field("host").ok_or_else(|| RpcError::invalid("host:port required"))?;
+        let (code, out, err) = crate::adb::run(
+            &adb,
+            &["connect".to_string(), host.to_string()],
+            std::time::Duration::from_secs(15),
+        )
+        .map_err(|e| RpcError::internal(e.0))?;
+        Ok(litebox_json::Json::obj(vec![
+            ("code", litebox_json::Json::num(code as f64)),
+            ("output", litebox_json::Json::str(format!("{}{}", out, err).trim().to_string())),
+        ]))
+    }
+
+    fn adb_shell(&mut self, params: &litebox_json::Json) -> Res {
+        let adb = self.adb()?;
+        let cmd = params.str_field("cmd").ok_or_else(|| RpcError::invalid("cmd required"))?;
+        let serial = params.str_field("serial");
+        let timeout = std::time::Duration::from_secs(param_u64(params, "timeout").unwrap_or(30));
+        crate::adb::shell(&adb, serial, cmd, timeout).map_err(|e| RpcError::internal(e.0))
+    }
+
+    fn adb_install(&mut self, params: &litebox_json::Json) -> Res {
+        let adb = self.adb()?;
+        let path = params.str_field("path").ok_or_else(|| RpcError::invalid("path required"))?;
+        let serial = params.str_field("serial");
+        let reinstall = params.get("reinstall").and_then(|v| v.as_bool()).unwrap_or(true);
+        crate::adb::install(&adb, serial, path, reinstall).map_err(|e| RpcError::internal(e.0))
+    }
+
+    fn adb_uninstall(&mut self, params: &litebox_json::Json) -> Res {
+        let adb = self.adb()?;
+        let package = params.str_field("package").ok_or_else(|| RpcError::invalid("package required"))?;
+        let serial = params.str_field("serial");
+        crate::adb::uninstall(&adb, serial, package).map_err(|e| RpcError::internal(e.0))
+    }
+
+    fn adb_am_start(&mut self, params: &litebox_json::Json) -> Res {
+        let adb = self.adb()?;
+        let component = params.str_field("component").ok_or_else(|| RpcError::invalid("component (pkg/.Activity) required"))?;
+        let serial = params.str_field("serial");
+        crate::adb::am_start(&adb, serial, component).map_err(|e| RpcError::internal(e.0))
+    }
+
+    fn adb_input(&mut self, params: &litebox_json::Json) -> Res {
+        let adb = self.adb()?;
+        let kind = params.str_field("kind").ok_or_else(|| RpcError::invalid("kind required (tap|swipe|text|keyevent)"))?;
+        let coords: Vec<i64> = params
+            .get("args")
+            .and_then(|a| a.as_arr())
+            .map(|a| a.iter().filter_map(|v| v.as_i64()).collect())
+            .unwrap_or_default();
+        let serial = params.str_field("serial");
+        crate::adb::input(&adb, serial, kind, &coords).map_err(|e| RpcError::internal(e.0))
+    }
+
+    fn adb_screencap(&mut self, params: &litebox_json::Json) -> Res {
+        let adb = self.adb()?;
+        let serial = params.str_field("serial");
+        let png = crate::adb::screencap_png(&adb, serial).map_err(|e| RpcError::internal(e.0))?;
+        match params.str_field("out") {
+            Some(out) => {
+                std::fs::write(out, &png).map_err(|e| RpcError::internal(format!("write: {e}")))?;
+                Ok(litebox_json::Json::obj(vec![
+                    ("written", litebox_json::Json::str(out)),
+                    ("bytes", litebox_json::Json::num(png.len() as f64)),
+                ]))
+            }
+            None => Ok(litebox_json::Json::obj(vec![
+                ("base64", litebox_json::Json::str(crate::util::base64(&png))),
+                ("bytes", litebox_json::Json::num(png.len() as f64)),
+            ])),
+        }
+    }
+
+    fn adb_logcat(&mut self, params: &litebox_json::Json) -> Res {
+        let adb = self.adb()?;
+        let serial = params.str_field("serial");
+        let tail = param_u64(params, "tail").unwrap_or(200).min(5000) as usize;
+        let filter = params.str_field("filter");
+        crate::adb::logcat(&adb, serial, tail, filter).map_err(|e| RpcError::internal(e.0))
+    }
+
+    fn adb_packages(&mut self, params: &litebox_json::Json) -> Res {
+        let adb = self.adb()?;
+        let serial = params.str_field("serial");
+        crate::adb::packages(&adb, serial).map_err(|e| RpcError::internal(e.0))
+    }
+
+    fn adb_ui(&mut self, params: &litebox_json::Json) -> Res {
+        let adb = self.adb()?;
+        let serial = params.str_field("serial");
+        crate::adb::ui_dump(&adb, serial).map_err(|e| RpcError::internal(e.0))
     }
 
     fn api_coverage(&mut self) -> Res {

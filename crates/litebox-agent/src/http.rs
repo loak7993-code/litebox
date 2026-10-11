@@ -333,6 +333,17 @@ pub const MCP_TOOL_LIST: &[(&str, &str, &str)] = &[
     ("snapshot.save", "Snapshot the full VM state", "{path?: string}"),
     ("snapshot.load", "Restore a snapshot", "{path: string}"),
     ("api.coverage", "Implemented framework API surface", ""),
+    ("adb.devices", "List adb devices (real Android: android15 container, hardware)", ""),
+    ("adb.connect", "Connect adb to a host:port", "{host: string}"),
+    ("adb.shell", "Run a shell command on a real Android device", "{cmd: string, serial?: string, timeout?: number}"),
+    ("adb.install", "Install an APK on a real device", "{path: string, serial?: string}"),
+    ("adb.uninstall", "Remove a package from a real device", "{package: string, serial?: string}"),
+    ("adb.am_start", "Launch an activity on a real device", "{component: string, serial?: string}"),
+    ("adb.input", "Input tap/swipe/text/keyevent", "{kind: string, args: number[]|string, serial?: string}"),
+    ("adb.screencap", "Screenshot a real device (PNG)", "{out?: string, serial?: string}"),
+    ("adb.logcat", "Real device logcat dump", "{tail?: number, filter?: string, serial?: string}"),
+    ("adb.packages", "List third-party packages on a real device", "{serial?: string}"),
+    ("adb.ui", "UI hierarchy dump (parsed nodes with bounds/text)", "{serial?: string}"),
 ];
 
 pub fn tool_list_json() -> String {
