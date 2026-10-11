@@ -7,10 +7,6 @@ over HTTP, and MCP.
 
 **Source:** https://github.com/loak7993-code/litebox
 
-**Live instance** (this repo's author runs one): `http://74.208.177.37:7830` —
-every route requires `Authorization: Bearer <token>`; the author's token is in
-`~/.litebox/token` on the host. Prefer a tunnel for TLS in production.
-
 LiteBox is not a full-system emulator. It does not boot an Android system
 image, and it does not run native `.so` libraries or graphics-heavy UI. It runs
 the DEX bytecode of real APKs against an emulated framework subset, which is
