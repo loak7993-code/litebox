@@ -144,6 +144,22 @@ curl -s localhost:7830/rpc -d '{"jsonrpc":"2.0","id":3,"method":"adb.screencap",
 | `heap_budget_bytes` | GC trigger threshold | 256 MiB |
 | `surface_width/height` | Framebuffer size | 720x1280 |
 
+## Operations & RAM profile
+
+The Android container is capped at 1.5 GB (swap to 2 GB) and stripped for
+headless automation: Bluetooth and the Latin IME are disabled via
+`pm disable-user` (persisted in the data volume — adb text injection doesn't
+need an IME). Helper scripts:
+
+```sh
+scripts/android-start.sh   # start + wait for boot (docker start or first run)
+scripts/android-trim.sh    # drop caches, kill background procs, trim residents
+scripts/android-stop.sh    # stop entirely: container RAM goes to ~0
+```
+
+Measured on this machine: Android 15 container ~1.0 GB steady-state (capped
+1.5 GB), LiteBox server ~4 MB, binary 1.53 MB static.
+
 ## Architecture
 
 ```
