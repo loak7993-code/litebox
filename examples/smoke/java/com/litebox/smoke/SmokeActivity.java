@@ -13,6 +13,7 @@ public class SmokeActivity extends android.app.Activity {
         layout.setOrientation(1);
         layout.addView(tv);
         layout.addView(btn);
+        layout.setFitsSystemWindows(true);
         setContentView(layout);
     }
 }

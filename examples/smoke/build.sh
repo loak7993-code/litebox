@@ -20,7 +20,7 @@ echo "[2/5] d8"
 "$BT/d8" --release --lib "$AJ" --min-api 24 --output build/dex $(find build/classes -name '*.class')
 
 echo "[3/5] aapt2 link"
-"$BT/aapt2" link -I "$AJ" --manifest AndroidManifest.xml -o build/smoke-unsigned.apk --auto-add-overlay
+"$BT/aapt2" link -I "$AJ" --manifest AndroidManifest.xml -o build/smoke-unsigned.apk --auto-add-overlay --min-sdk-version 24 --target-sdk-version 35
 
 echo "[4/5] package dex"
 cp build/dex/classes.dex ./classes.dex

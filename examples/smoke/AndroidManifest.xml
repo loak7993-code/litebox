@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.litebox.smoke">
-  <application android:label="Smoke">
+  <application android:label="Smoke" android:hardwareAccelerated="false" android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen">
     <activity android:name=".SmokeActivity" android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
