@@ -36,6 +36,7 @@ pub fn register(registry: &mut litebox_dalvik::NativeRegistry) {
         Ok(e.get_field(this, "tag").unwrap_or(Value::null()))
     }));
     registry.register(V, "setVisibility", "(I)V", false, f(|_e, _t, _a| Ok(Value::null())));
+    registry.register(V, "setFitsSystemWindows", "(Z)V", false, f(|_e, _t, _a| Ok(Value::null())));
     registry.register(V, "setOnClickListener", "(Landroid/view/View$OnClickListener;)V", false, f(|e, this, a| {
         e.set_field(this, "clickListener", e.arg_ref(a, 0));
         Ok(Value::null())
