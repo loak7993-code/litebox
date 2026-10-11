@@ -1,0 +1,12 @@
+[package]
+name = "litebox-dex"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+litebox-json = { path = "../litebox-json" }
+litebox-zip = { path = "../litebox-zip" }
+
+[lib]
+path = "src/lib.rs"

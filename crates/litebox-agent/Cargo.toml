@@ -1,0 +1,20 @@
+[package]
+name = "litebox-agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+litebox-json = { path = "../litebox-json" }
+litebox-zip = { path = "../litebox-zip" }
+litebox-dex = { path = "../litebox-dex" }
+litebox-core = { path = "../litebox-core" }
+litebox-dalvik = { path = "../litebox-dalvik" }
+litebox-android = { path = "../litebox-android" }
+
+[[bin]]
+name = "litebox"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"

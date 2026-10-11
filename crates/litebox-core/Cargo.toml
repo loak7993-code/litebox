@@ -1,0 +1,11 @@
+[package]
+name = "litebox-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+litebox-json = { path = "../litebox-json" }
+
+[lib]
+path = "src/lib.rs"

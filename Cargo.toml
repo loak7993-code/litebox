@@ -1,0 +1,27 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/litebox-json",
+    "crates/litebox-zip",
+    "crates/litebox-dex",
+    "crates/litebox-core",
+    "crates/litebox-dalvik",
+    "crates/litebox-android",
+    "crates/litebox-agent",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+rust-version = "1.75"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+debug = false
+
+[profile.bench]
+opt-level = 3
+lto = "thin"

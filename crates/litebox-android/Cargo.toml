@@ -1,0 +1,15 @@
+[package]
+name = "litebox-android"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+litebox-json = { path = "../litebox-json" }
+litebox-zip = { path = "../litebox-zip" }
+litebox-dex = { path = "../litebox-dex" }
+litebox-core = { path = "../litebox-core" }
+litebox-dalvik = { path = "../litebox-dalvik" }
+
+[lib]
+path = "src/lib.rs"
